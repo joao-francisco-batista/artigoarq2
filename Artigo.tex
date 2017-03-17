@@ -1,52 +1,93 @@
 \documentclass[12pt]{article}
 
-\usepackage{sbc-template}
-
 \usepackage{graphicx,url}
-
-\usepackage[brazil]{babel}   
 %\usepackage[latin1]{inputenc}  
 \usepackage[utf8]{inputenc}  
+\usepackage[brazil]{babel}
+\usepackage{float}
 % UTF-8 encoding is recommended by ShareLaTex
-
      
 \sloppy
 
 \title{Micro-arquitetura ZEN e sua implementação no Ryzen 7}
 
-\author{Roberto Gonçalves Santos Júnior\inst{1}, Rafael H. Bordini\inst{2}, Flávio Rech
-  Wagner\inst{1}, Jomi F. Hübner\inst{3} }
+\author{Roberto Gonçalves Santos Júnior \and João Francisco de Oliveira Batista 
+\and Leonardo Oliveira \and Guilherme Bertoluchi \and Gustavo Nunes \and Marcos Oliveira}
 
 
-\address{Departamento de Ciência da Computação -- Universidade Federal de Lavras
-  (UFLA)\\
-  Caixa Postal 15.064 -- 91.501-970 -- Lavras -- MG -- Brazil
+\address{
+\centering
+Departamento de Ciência da Computação \\ Universidade Federal de Lavras
+  (UFLA)\\ Caixa Postal 15.064 -- 91.501-970 \\ Lavras, MG -- Brazil \\
 \nextinstitute
   Departamento de Ciência da Computação\\
-  Universidade Federal de Lavras -- Lavras, MG -- Brazil
-  \email{\{roberto.goncalves\}@computacao.ufla.br, R.Bordini@durham.ac.uk,
-  jomi@inf.furb.br}
+  Universidade Federal de Lavras \\ Lavras, MG -- Brazil \\
+  \email{\{roberto.goncalves\}@computacao.ufla.br, {jonesjoao}@computacao.ufla.br}
 }
+
+\thispagestyle{empty}
+\newpage
+
 
 \begin{document} 
 
 \maketitle
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\thispagestyle{empty}
+\newpage
 
 \begin{abstract}
   This paper describes a technical analysis about the ZEN microarchitecture provided by AMD. This analysis consists on the each block of ZEN architecture and their detailed description about how it works. Futhermore, discuss what has been implemented on Ryzen 7.
 \end{abstract}
-     
-\begin{resumo} 
+
+\begin{resumo}
   Esse artigo descreve a analise técnica sobre a microarquitetura ZEN desenvolvida pela AMD. Essa analise consiste na separação de cada bloco da arquitetura ZEN e sua descrição detalhada de como ela funciona. Além disso, discutir o que foi implementado no Ryzen 7. 
 \end{resumo}
 
+\thispagestyle{empty}
+\newpage
 
+
+\section{Cache de micro-operações}
+
+O processador Ryzen 7 é o primeiro processador da AMD a utilizar da tecnologia da cache de micro operações, o que resultava na sua perda de mercado constante contra a Intel assim a AMD teve que correr atrás do prejuízo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=120mm,scale=0.8]{micro-op_cache.jpg}
+\caption{Micro-Arquitetura ZEN, fonte: AMD}
+\label{fig:AMD CORE}
+\end{figure}
+
+O núcleo Zen é uma microarquitetura dramaticamente melhor do que a geração anterior, a Bulldozer. O projeto do Bulldozer da AMD não tinha nenhuma cache de operação, isso fazia com que ele obtivesse detalhes de outras caches para implementar micro-operações usadas com frequência.
+
+Agora cada núcleo Zen inclui uma nova cache de micro operações e uma cache de dados L1 que utiliza o write-back, diferentemente da sua geração anterior que utilizava uma cache de write-through, que foi uma fonte de muito tempo ocioso em algumas partes de códigos, que tem maior desempenho e menor consumo. Ele tem multithreading bidirecional e buffers muito mais amplos internos, com FP privado e unidades SIMD, bem como um cache L2 privado.
+
+Além disso, a AMD disse que o decodificador do Zen, neste momento, pode decodificar quatro instruções por ciclo para encher a fila de operações. Essa fila, com a ajuda do cache de micro operações, pode fornecer até 6 operações/ciclo para os agendadores, porém em média são fornecidas 4 operações uma vez que uma instrução mapeia uma micro operação. Elas ainda são relativamente pequenas, a versão da Intel pode suportar 1536 micro operações com associatividade 8-way. Já a cache de micro-operações para o Zen pode suportar micro-operações de 2K cp, até 8 operações por linha de cache.
+
+A cache de micro-operação pode ser assim determinada como uma cache que armazena micro-operações de instruções recebidas da cache de instrução. Quando uma instrução precisa ser decodificada a cache de micro operações é verificada, quanto ao formato que não foi decodificado, que é reutilizado em armazenamento na cache. Caso não esteja disponível, a instrução será decodificada e armazenada em cache.
+
+A latência que resulta das penalidades de faltas são bastante significativas e uma das opções para aumentar o desempenho por trás dessas penalidades foi acrescentar a cache de micro-operações. A cache de micro operações permite que as instruções que foram recentemente usadas sejam chamadas na fila de micro operações em vez de serem decodificadas novamente, diminuindo assim os acessos através do núcleo e outros níveis de cache, pois com um acerto(hit) nessa nova cache de micro-operações é reduzido o comprimento do pipeline em dois estágios e ainda é cancelado o pedido da cache de instrução L1. A cache de micro operações possui, ainda as micro-tags que são testadas quando uma instrução de ponteiro tem seu endereço físico determinada, entrando assim em uma fila de solicitações da cache convencional. Então, as micro-tags indicam se um determinado endereço está presente ou não, e se estiver, qual modo de cache é prevista para conter as micro-operações desejadas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=115mm,scale=0.8]{Micro-operations.png}
+\caption{Ilustração da decomposição em várias micro-operações}
+\label{fig:AMD CORE}
+\end{figure}
+
+É importante ressaltar ainda que, quem controla a execução das micro operações é a unidade de controle da CPU, que decide sobre a sua execução ao executar várias otimizações, como por exemplo, reordenamento, fusão e cache.
+
+\newpage
 
 \section{A arquitetura ZEN no Ryzen 7}
 
 A arquitetura ZEN é muito diferente das antigas arquiteturas da AMD, e segundo a AMD, com ela, eles conseguiram alcançar "40\% IPC(Instructions per clock) speedup em relação a arquitetura do  Excavator" o que nessa seção, será discutido no Ryzen 7 1700.\\
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=120mm,scale=0.8]{AMD-energy-per-cycle.jpg}
 \caption{Comparação ZEN, fonte: AMD}
@@ -56,7 +97,7 @@ A arquitetura ZEN é muito diferente das antigas arquiteturas da AMD, e segundo 
 É importante salientar que segundo o gráfico, houve 40\% ganho de IPC e o mesmo número de energia por ciclo do Excavator, esse é um dos motivos da grande surpresa na arquitetura ZEN.
 
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=120mm,scale=0.8]{AMD-Zen_CPU-Complex.png}
 \caption{CPU Complex, fonte: AMD}
@@ -70,7 +111,7 @@ Essa mudança foi crucial para o desempenho do Zen sobre o Excavator, na relaç�
 O aumento da duplicação da quantidade de bits para a FMAC, possibilita o aumento da quantidade de instruções que podem ser executadas em cada FMAC. Outra modificação importante é uma instruction decoder para Inteiro e FP, que no Excavator era divida. A unidade de decodificação é responsável, basicamente, por determinar qual instrução será executada depois que passou pelo instruction memory.
 
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=115mm,scale=0.8]{zenex.jpg}
 \caption{CPU Complex, fonte: AMD}
@@ -81,7 +122,7 @@ A partir dessas informações, com o aumento da capacidade das FMACs, investimen
 
 A etapa instruction fetch do Pipeline é a primeira etapa do processo, e a arquitetura ZEN tem algumas diferenças das arquiteturas anteriores:
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=115mm,scale=0.8]{AMD-Zen_Fetch.png}
 \caption{CPU Complex, fonte: AMD}
@@ -98,7 +139,7 @@ A TLB(Translation Lookaside Buffer) no Branch Predictor é responsável para red
 	\item l2 com 512 entradas e suporte pra páginas de 4K até 256K;
 \end{itemize}
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=115mm,scale=0.5]{amd-zen-decode.jpg}
 \caption{CPU Complex, fonte: AMD}
@@ -111,6 +152,8 @@ Na parte de decodificação, é interessante ressaltar a Stack Engine e o dispat
 	\item O dispatch do ZEN pode aplicar seis instruções por clock, até um máximo de 6/ciclos para INT e 4/ciclos para FP.
 \end{itemize}
 
+\newpage
+
 \section{General Information}
 
 All full papers and posters (short papers) submitted to some SBC conference,
@@ -122,6 +165,8 @@ points of space before each paragraph. Page numbers must be suppressed.
 
 Full papers must respect the page limits defined by the conference.
 Conferences that publish just abstracts ask for \textbf{one}-page texts.
+
+\newpage
 
 \section{First Page} \label{sec:firstpage}
 
@@ -140,6 +185,8 @@ The abstract and ``resumo'' (if is the case) must be in 12 point Times font,
 indented 0.8cm on both sides. The word \textbf{Abstract} and \textbf{Resumo},
 should be written in boldface and must precede the text.
 
+\newpage
+
 \section{CD-ROMs and Printed Proceedings}
 
 In some conferences, the papers are published on CD-ROM while only the
@@ -147,7 +194,7 @@ abstract is published in the printed Proceedings. In this case, authors are
 invited to prepare two final versions of the paper. One, complete, to be
 published on the CD and the other, containing only the first page, with
 abstract and ``resumo'' (for papers in Portuguese).
-
+\newpage
 \section{Sections and Paragraphs}
 
 Section titles must be in boldface, 13pt, flush left. There should be an extra
@@ -158,7 +205,7 @@ subsequent paragraphs should be indented by 1.27 cm.
 \subsection{Subsections}
 
 The subsection titles must be in boldface, 12pt, flush left.
-
+\newpage
 \section{Figures and Captions}\label{sec:figs}
 
 
@@ -168,14 +215,14 @@ both margins, as shown in Figure~\ref{fig:exampleFig2}. The caption font must
 be Helvetica, 10 point, boldface, with 6 points of space before and after each
 caption.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=.5\textwidth]{fig1.jpg}
 \caption{A typical figure}
 \label{fig:exampleFig1}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[width=.3\textwidth]{fig2.jpg}
 \caption{This figure is an example of a figure caption taking more than one
@@ -209,6 +256,8 @@ Case 2 & 0.003(1) & 100.0\\[0.5ex]
 \end{tabular}
 \end{table}
 
+\newpage
+
 \section{Images}
 
 All images and illustrations should be in black-and-white, or gray tones,
@@ -217,6 +266,8 @@ internet, etc.). The image resolution on paper should be about 600 dpi for
 black-and-white images, and 150-300 dpi for grayscale images.  Do not include
 images with excessive resolution, as they may take hours to print, without any
 visible difference in the result. 
+
+\newpage
 
 \section{References}
 
