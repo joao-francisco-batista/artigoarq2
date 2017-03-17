@@ -12,7 +12,7 @@
 \title{Micro-arquitetura ZEN e sua implementação no Ryzen 7}
 
 \author{Roberto Gonçalves Santos Júnior \and João Francisco de Oliveira Batista 
-\and Leonardo Oliveira \and Guilherme Bertoluchi \and Gustavo Nunes \and Marcos Oliveira}
+\and Leonardo Carvalho de Oliveira \and Guilherme Bertoluchi \and Gustavo Nunes \and Marcos Oliveira}
 
 
 \address{
@@ -22,7 +22,8 @@ Departamento de Ciência da Computação \\ Universidade Federal de Lavras
 \nextinstitute
   Departamento de Ciência da Computação\\
   Universidade Federal de Lavras \\ Lavras, MG -- Brazil \\
-  \email{\{roberto.goncalves\}@computacao.ufla.br, {jonesjoao}@computacao.ufla.br}
+  \email{
+  \{roberto.goncalves\}@computacao.ufla.br, {jonesjoao}@computacao.ufla.br, \\{leo}@computacao.ufla.br}
 }
 
 \thispagestyle{empty}
@@ -50,6 +51,32 @@ Departamento de Ciência da Computação \\ Universidade Federal de Lavras
 \thispagestyle{empty}
 \newpage
 
+\section{Hierarquia de Memória}
+A mais importante novidade relacionada a memória na microarquitetura Zen é a introdução de um novo sistema de cache de baixa latência com grande largura de banda, ou seja, uma cache com uma ICP muito melhor, pois mais instruções serão executadas em menor tempo. Este elemento é essencial para a performance de um processador com múltiplos núcleos que pretende usar o multithread de forma eficiente.
+Agora cada núcleo Zen inclui uma nova cache de micro operações.
+Ela terá suporte tanto à DDR3 quanto DDR4.Como a zen é baseada em um unidade quad core, cada núcleo dela terá um cache L3 compartilhada de 8MB em um total de quatro cores, uma dedicada cache L2 de 512KB . Como já dito, ela foi projetada para um alta performance e uma baixa potência.Tal cache L3 é 16-way associative, e exclusiva da cache L2.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=120mm,scale=0.8]{amd.jpg}
+\caption{Construção do Zen baseado no quad core unit , fonte: AMD}
+\label{fig:amd}
+\end{figure}
+
+buffers muito mais amplos internos
+Como é uma unidade quad core, os cores não compartilham nada além desse cache L3, sendo assim independentes. Dizem que tal característica resulta em melhores núcleos em relação à performance e eficiência.
+
+Na ideia da Zen também foi incluído um sistema de cache muito melhor, como Write back na cache L1, diferenciando dos Bulldozer que usavam Write Through. Uma cache L2 e uma cache L3 e uma FPU mais rápida, sendo uma cache L2 e FPU privadas, e com uma quantidade de buffers internos maior. As larguras de banda das memórias cache também aumentaram.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=120mm,scale=0.8]{ZenCache.png}
+\caption{Hierarquia de cache no Zen, fonte: AMD}
+\label{fig:amd}
+\end{figure}
+Isso fez com os processadores AMD Zen,trabalhem de forma paralela e mais efetiva em relação a seus produtos antigos, e visando um futuro de seus concorrentes, portanto a amd conseguiu fazer com que sua nova arquitetura resultasse em melhores núcleos tanto em termos de performance quanto de eficiência.
+
+\newpage
 
 \section{Cache de micro-operações}
 
